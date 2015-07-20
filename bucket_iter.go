@@ -36,8 +36,7 @@ func main() {
 		p.ParseOneBucketFile(bname)
 	}
 
-	buckets = flag.Args()
-	for _, bname := range buckets {
+	for _, bname := range flag.Args() {
 		p.ParseOneBucketFile(bname)
 	}
 

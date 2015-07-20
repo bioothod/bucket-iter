@@ -116,6 +116,8 @@ func (p *ParserCtl) ParseOneBucketFile(file string) (err error) {
 	}
 	defer in.Close()
 
+	var keys uint64
+
 	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -127,6 +129,7 @@ func (p *ParserCtl) ParseOneBucketFile(file string) (err error) {
 				p.Buckets[sb[0]] = stat
 			}
 			stat.Insert(sb[1])
+			keys += 1
 		}
 	}
 
@@ -135,9 +138,7 @@ func (p *ParserCtl) ParseOneBucketFile(file string) (err error) {
 		return err
 	}
 
-	for bname, stat := range p.Buckets {
-		log.Printf("bucket: %s, files: %d\n", bname, len(stat.MatchedSize))
-	}
+	log.Printf("bucket-file: %s, inserted-keys: %d\n", file, keys)
 
 	return err
 }
