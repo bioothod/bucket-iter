@@ -131,6 +131,7 @@ func (p *ParserCtl) ParseOneBucketFile(file string) (err error) {
 			}
 			//stat.Insert(sb[1])
 			stat.Keys += 1
+			keys += 1
 		}
 	}
 
