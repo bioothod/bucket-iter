@@ -181,12 +181,21 @@ func (p *ParserCtl) ParseFile(file string) (err error) {
 }
 
 func (p *ParserCtl) PrintStats() {
+	var total_used_size, total_real_used_size, total_disk_size uint64
+	var total_real_records, total_file_records int64
+
+	tb := func(sz uint64) float64 {
+		return float64(sz) / float64(1024 * 1024 * 1024 * 1024)
+	}
+
 	for bname, stat := range p.Buckets {
 		b, err := p.BucketCheck(bname)
 		if err != nil {
 			log.Printf("bucket: %s: could not read bucket data and stats: %v\n", bname, err)
 			continue
 		}
+
+		total_file_records += int64(len(stat.MatchedSize))
 
 		for group_id, sg := range b.Group {
 			var used_size, removed_size uint64
@@ -204,6 +213,8 @@ func (p *ParserCtl) PrintStats() {
 
 				records += sb.VFS.RecordsTotal
 				removed_records += sb.VFS.RecordsRemoved
+
+				total_disk_size += sb.VFS.TotalSizeLimit
 			}
 
 			real_size := used_size - removed_size
@@ -212,20 +223,29 @@ func (p *ParserCtl) PrintStats() {
 			diff := records_real - int64(len(stat.MatchedSize))
 			percentage := float64(diff) / float64(records_real) * 100
 
-			gb := func(sz uint64) float64 {
-				return float64(sz) / float64(1024 * 1024 * 1024 * 1024)
-			}
+			total_used_size += used_size
+			total_real_used_size += real_size
+			total_real_records += records_real
 
 			fmt.Printf("bucket: %s, files: %d, stat: group: %d, used-size: %d (%.2f Tb), removed-size: %d (%.2f Tb), real-used-size: %d (%.2f Tb), records: %d, removed-records: %d, real-records: %d, diff-with-file: %d, percentage: %.2f%%\n",
 				bname, len(stat.MatchedSize),
 				group_id,
-				used_size, gb(used_size), removed_size, gb(removed_size), real_size, gb(real_size),
+				used_size, tb(used_size), removed_size, tb(removed_size), real_size, tb(real_size),
 				records, removed_records, records_real,
 				diff, percentage)
 
 			break
 		}
 	}
+
+	diff := total_real_records - total_file_records
+	percentage := float64(diff) / float64(total_real_records) * 100
+
+	fmt.Printf("buckets: %d, stat: used-size: %.2f Tb, real-used-size: %.2f Tb, total-disk-size: %.2f Tb, real-records: %d, provided-file-records: %d, diff: %d, percentage: %.2f%%\n",
+		len(p.Buckets),
+		tb(total_used_size), tb(total_real_used_size), tb(total_disk_size),
+		total_real_records, total_file_records,
+		diff, percentage)
 
 	return
 }
