@@ -6,13 +6,24 @@ import (
 	"log"
 )
 
+type string_slice []string
+func (s *string_slice) String() string {
+	return "Unused"
+}
+
+func (s *string_slice) Set(value string) error {
+	*s = append(*s, value)
+	return nil
+}
+
 func main() {
-	keys := flag.String("keys", "", "File with keys")
+	var buckets string_slice
+	flag.Var(&buckets, "bucket", "File with keys for one bucket (can be specified multiple times)")
 	config_file := flag.String("config", "", "Transport config file")
 	flag.Parse()
 
-	if *keys == "" {
-		log.Fatalf("You must specify keys file")
+	if len(buckets) == 0 {
+		log.Fatalf("You must specify file with keys")
 	}
 
 	if *config_file == "" {
@@ -21,7 +32,11 @@ func main() {
 
 	p := parse.ParserInit(*config_file)
 
-	p.ParseFile(*keys)
+	for _, bname := range buckets {
+		p.ParseOneBucketFile(bname)
+	}
+
+	p.PrintStats()
 	return
 }
 
