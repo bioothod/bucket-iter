@@ -22,8 +22,8 @@ func main() {
 	config_file := flag.String("config", "", "Transport config file")
 	flag.Parse()
 
-	if len(buckets) == 0 {
-		log.Fatalf("You must specify file with keys")
+	if len(buckets) == 0 && len(flag.Args()) == 0 {
+		log.Fatalf("You must specify file with keys or provide files in command line (without -bucket arg)")
 	}
 
 	if *config_file == "" {
@@ -33,6 +33,10 @@ func main() {
 	p := parse.ParserInit(*config_file)
 
 	for _, bname := range buckets {
+		p.ParseOneBucketFile(bname)
+	}
+
+	for _, bname := range flag.Args() {
 		p.ParseOneBucketFile(bname)
 	}
 
