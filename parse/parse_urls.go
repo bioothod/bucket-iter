@@ -16,6 +16,7 @@ import (
 type BucketStat struct {
 	// hashed object name to its size mapping
 	MatchedSize map[string]uint64
+	Keys uint64
 
 	TotalMatchedSize uint64
 	TotalUnmatchedSize uint64
@@ -128,8 +129,8 @@ func (p *ParserCtl) ParseOneBucketFile(file string) (err error) {
 				stat = NewBucketStat()
 				p.Buckets[sb[0]] = stat
 			}
-			stat.Insert(sb[1])
-			keys += 1
+			//stat.Insert(sb[1])
+			stat.Keys += 1
 		}
 	}
 
@@ -196,7 +197,7 @@ func (p *ParserCtl) PrintStats() {
 			continue
 		}
 
-		total_file_records += int64(len(stat.MatchedSize))
+		total_file_records += int64(stat.Keys)
 
 		for group_id, sg := range b.Group {
 			var used_size, removed_size uint64
@@ -221,7 +222,7 @@ func (p *ParserCtl) PrintStats() {
 			real_size := used_size - removed_size
 
 			records_real := int64(records - removed_records)
-			diff := records_real - int64(len(stat.MatchedSize))
+			diff := records_real - int64(stat.Keys)
 			percentage := float64(diff) / float64(records_real) * 100
 
 			total_used_size += used_size
@@ -229,7 +230,7 @@ func (p *ParserCtl) PrintStats() {
 			total_real_records += records_real
 
 			fmt.Printf("bucket: %s, files: %d, stat: group: %d, used-size: %d (%.2f Tb), removed-size: %d (%.2f Tb), real-used-size: %d (%.2f Tb), records: %d, removed-records: %d, real-records: %d, diff-with-file: %d, percentage: %.2f%%\n",
-				bname, len(stat.MatchedSize),
+				bname, stat.Keys,
 				group_id,
 				used_size, tb(used_size), removed_size, tb(removed_size), real_size, tb(real_size),
 				records, removed_records, records_real,
